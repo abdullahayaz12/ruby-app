@@ -51,4 +51,64 @@
       </p>
     </div>
   </div>
+  
+  <!-- Database Integration Section -->
+  <div class="row" style="margin-top:2em">
+    <div class="col-md-12">
+      <h2><span class="glyphicon glyphicon-database"></span> Database Connection Status</h2>
+      <div class="alert alert-success" role="alert">
+        <strong>✓ Database Connected Successfully!</strong>
+        <ul style="margin-top:10px; margin-bottom:0">
+          <li>Total Widgets: <strong><%= @widget_count %></strong></li>
+          <li>Total Stock: <strong><%= @total_stock %></strong></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  
+  <% if @widgets.any? %>
+    <div class="row" style="margin-top:2em">
+      <div class="col-md-12">
+        <h3><span class="glyphicon glyphicon-list"></span> Recent Widgets</h3>
+        <div class="table-responsive">
+          <table class="table table-striped table-bordered">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Stock</th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @widgets.each do |widget| %>
+                <tr>
+                  <td><strong><%= widget.name %></strong></td>
+                  <td><%= widget.description %></td>
+                  <td><span class="badge <%= widget.stock > 0 ? 'badge-success' : 'badge-danger' %>"><%= widget.stock %></span></td>
+                  <td><%= widget.created_at.strftime("%B %d, %Y") %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          <a href="<%= widgets_path %>" class="btn btn-primary">View All Widgets</a>
+          <a href="<%= new_widget_path %>" class="btn btn-success">Create New Widget</a>
+        </p>
+      </div>
+    </div>
+  <% else %>
+    <div class="row" style="margin-top:2em">
+      <div class="col-md-12">
+        <h3><span class="glyphicon glyphicon-list"></span> Widgets</h3>
+        <div class="alert alert-warning" role="alert">
+          <strong>No widgets found.</strong> Get started by creating your first widget!
+        </div>
+        <p>
+          <a href="<%= new_widget_path %>" class="btn btn-success btn-lg">Create Your First Widget</a>
+        </p>
+      </div>
+    </div>
+  <% end %>
 </div>

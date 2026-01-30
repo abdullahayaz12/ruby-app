@@ -14,6 +14,7 @@ gem "puma", ">= 7.0"
 
 gem 'bootsnap', require: false
 gem 'listen'
+gem 'dotenv-rails', groups: [:development, :test, :production]
 gem 'datadog', require: 'datadog/auto_instrument'
 # bundle exec rake doc:rails generates the API under doc/api.
 gem 'sdoc',          group: :doc
