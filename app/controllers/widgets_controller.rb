@@ -4,7 +4,7 @@ class WidgetsController < ApplicationController
   # GET /widgets
   # GET /widgets.json
   def index
-    @widgets = Widget.all
+    @widgets = Widget.order(created_at: :desc).limit(20)
   end
 
   # GET /widgets/1
