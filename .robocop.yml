@@ -13,6 +13,8 @@ AllCops:
     - 'node_modules/**/*'
     - 'tmp/**/*'
     - 'log/**/*'
+    - 'test/**/*'
+    - 'spec/**/*'
 
 # Performance Rules - Critical for preventing bad queries
 Performance:

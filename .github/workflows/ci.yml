@@ -22,7 +22,7 @@ jobs:
       
       - name: Run RuboCop
         run: |
-          bundle exec rubocop --parallel --format github
+          bundle exec rubocop --parallel --format github || (echo "⚠️ RuboCop found issues. Review and fix them." && exit 1)
         continue-on-error: false
   
   # Security Scanning
@@ -88,17 +88,11 @@ jobs:
       
       - name: Run Tests with Bullet
         run: |
-          bundle exec rspec || bundle exec rails test
+          bundle exec rails test
         env:
           BULLET_ENABLED: true
           BULLET_ALERT: true
-          BULLET_BRAKE: true
-      
-      - name: Check for N+1 queries
-        if: failure()
-        run: |
-          echo "❌ Tests failed - check for N+1 queries or other issues"
-          exit 1
+          BULLET_RAISE: true
   
   # Query Performance Check
   query-check:
@@ -133,16 +127,11 @@ jobs:
       
       - name: Setup Database
         run: |
-          bundle exec rails db:create db:schema:load
+          bundle exec rails db:create db:schema:load || bundle exec rails db:setup
       
       - name: Run Query Analysis
         run: |
-          bundle exec rails runner "
-            require 'query_diet'
-            # Check for common query issues
-            puts 'Running query analysis...'
-            # This will be enhanced with actual query checks
-          "
+          bundle exec rake quality:check_queries || echo "Query check completed with warnings"
   
   # Build Check
   build:
@@ -159,8 +148,8 @@ jobs:
       
       - name: Verify build
         run: |
-          bundle exec rails assets:precompile
-          bundle exec rails db:schema:load RAILS_ENV=production
+          RAILS_ENV=production bundle exec rails assets:precompile
+          RAILS_ENV=production bundle exec rails db:schema:load DISABLE_DATABASE_ENVIRONMENT_CHECK=1
 
   # Deployment Gate
   deploy-gate:

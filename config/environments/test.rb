@@ -63,10 +63,12 @@ Rails.application.configure do
 
   # Enable Bullet in test environment to catch N+1 queries
   config.after_initialize do
-    Bullet.enable = true
-    Bullet.raise = true  # Fail tests if N+1 queries detected
-    Bullet.bullet_logger = true
-    Bullet.console = true
-    Bullet.rails_logger = true
+    if defined?(Bullet)
+      Bullet.enable = true
+      Bullet.raise = true  # Fail tests if N+1 queries detected
+      Bullet.bullet_logger = true
+      Bullet.console = true
+      Bullet.rails_logger = true
+    end
   end
 end
