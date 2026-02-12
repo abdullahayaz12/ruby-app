@@ -131,7 +131,7 @@ jobs:
       
       - name: Run Query Analysis
         run: |
-          bundle exec rake quality:check_queries || echo "Query check completed with warnings"
+          bundle exec rake quality:check_queries
   
   # Build Check
   build:
