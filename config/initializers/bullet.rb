@@ -29,4 +29,5 @@ if defined?(Bullet)
   # Bullet.skip_html_injection = true
   
   # Note: Bullet checks are limited to new code by running tests only for changed files
+  # See bin/test-changed and CI workflow for implementation
 end
