@@ -12,7 +12,6 @@ class ReportGenerator
   end
 
   def generate_report
-    # Fixed: Use find_each for large datasets (loads in batches)
     total = 0
     Order.find_each do |order|
       total += order.total
