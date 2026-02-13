@@ -1,5 +1,4 @@
 # RuboCop Practice File 2 - Performance Issues (FIXED)
-# Run: bundle exec rubocop test_scenarios/rubocop_practice_2.rb
 
 class ReportGenerator
   def generate
