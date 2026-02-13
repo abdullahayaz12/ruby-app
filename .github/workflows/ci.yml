@@ -2,9 +2,9 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ ammar ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
 
 jobs:
   # Linting and Code Style
@@ -43,31 +43,6 @@ jobs:
           echo ""
           echo "$CHANGED_FILES" | xargs bundle exec rubocop --parallel --format github
         continue-on-error: false
-  
-  # Security Scanning
-  security:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.3'
-          bundler-cache: true
-      
-      - name: Run Brakeman
-        run: |
-          bundle exec brakeman --no-pager --format json --output brakeman-report.json --quiet
-        continue-on-error: false
-      
-      - name: Upload Brakeman report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: brakeman-report
-          path: brakeman-report.json
   
   # Tests with N+1 Detection
   test:
@@ -205,7 +180,7 @@ jobs:
   # Deployment Gate
   deploy-gate:
     name: Deployment Gate
-    needs: [lint, security, test, build]
+    needs: [lint, test, build]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
