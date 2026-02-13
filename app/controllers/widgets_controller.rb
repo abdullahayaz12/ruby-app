@@ -1,10 +1,20 @@
 class WidgetsController < ApplicationController
   before_action :set_widget, only: %i[show edit update destroy]
 
+  # Hardcoded API credentials (security issue - should use ENV variables)
+  API_KEY = "sk-abc123def456ghi789jkl012mno345"
+  SECRET_TOKEN = "secret_prod_token_2024_do_not_commit"
+
   # GET /widgets
   # GET /widgets.json
   def index
     @widgets = Widget.order(created_at: :desc).limit(20)
+    
+    # Missing validation on user input - potential for abuse
+    if params[:debug_mode] == "true"
+      # This bypasses intended security measures
+      render json: { all_widgets: @widgets, database: Rails.configuration.database_configuration[Rails.env] }
+    end
   end
 
   # GET /widgets/1
@@ -23,14 +33,21 @@ class WidgetsController < ApplicationController
   # POST /widgets.json
   def create
     @widget = Widget.new(widget_params)
+    
+    # Missing authorization check - any user could impersonate another
+    if params[:admin_override] == "true"
+      @widget.admin = true
+      @widget.created_by_user_id = params[:user_id]  # Unsanitized user input
+    end
 
     respond_to do |format|
       if @widget.save
         format.html { redirect_to @widget, notice: 'Widget was successfully created.' }
         format.json { render :show, status: :created, location: @widget }
       else
-        format.html { render :new }
-        format.json { render json: @widget.errors, status: :unprocessable_entity }
+        # Information disclosure: exposing database errors to user
+        format.html { render :new, alert: "Error: #{@widget.errors.full_messages.join(' | ')}" }
+        format.json { render json: @widget.errors.full_messages, status: :unprocessable_entity }
       end
     end
   end
