@@ -1,0 +1,35 @@
+#!/bin/bash
+# Run RuboCop only on changed Ruby files
+# Usage: bin/rubocop-changed [base_branch]
+# Example: bin/rubocop-changed main
+
+set -e
+
+# Default to comparing with main branch if no argument provided
+BASE_BRANCH="${1:-main}"
+
+# Fetch latest changes from remote
+echo "Fetching latest changes from origin..."
+git fetch origin "${BASE_BRANCH}:${BASE_BRANCH}" 2>/dev/null || true
+
+# Get changed Ruby files compared to base branch
+CHANGED_FILES=$(git diff --name-only --diff-filter=ACMRTUXB "${BASE_BRANCH}"...HEAD | grep -E '\.(rb|rake)$' || true)
+
+# Also include staged files
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMRTUXB | grep -E '\.(rb|rake)$' || true)
+
+# Combine and deduplicate
+ALL_CHANGED=$(echo -e "${CHANGED_FILES}\n${STAGED_FILES}" | sort -u | grep -v '^$' || true)
+
+# If no Ruby files changed, exit
+if [ -z "$ALL_CHANGED" ]; then
+  echo "✅ No Ruby files changed compared to ${BASE_BRANCH}"
+  exit 0
+fi
+
+# Run RuboCop only on changed files
+echo "🔍 Running RuboCop on changed files compared to ${BASE_BRANCH}:"
+echo "$ALL_CHANGED" | sed 's/^/  - /'
+echo ""
+
+echo "$ALL_CHANGED" | xargs bundle exec rubocop --parallel

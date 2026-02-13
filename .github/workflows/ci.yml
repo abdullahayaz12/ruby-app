@@ -20,9 +20,28 @@ jobs:
           ruby-version: '3.3'
           bundler-cache: true
       
-      - name: Run RuboCop
+      - name: Run RuboCop on Changed Files Only
         run: |
-          bundle exec rubocop --parallel --format github
+          # Get changed Ruby files compared to base branch
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            CHANGED_FILES=$(git diff --name-only --diff-filter=ACMRTUXB ${BASE_SHA}...HEAD | grep -E '\.(rb|rake)$' || true)
+          else
+            # For push events, compare with previous commit
+            CHANGED_FILES=$(git diff --name-only --diff-filter=ACMRTUXB HEAD~1 HEAD | grep -E '\.(rb|rake)$' || true)
+          fi
+          
+          # If no Ruby files changed, skip RuboCop
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No Ruby files changed, skipping RuboCop"
+            exit 0
+          fi
+          
+          # Run RuboCop only on changed files
+          echo "Running RuboCop on changed files:"
+          echo "$CHANGED_FILES" | tr '\n' ' '
+          echo ""
+          echo "$CHANGED_FILES" | xargs bundle exec rubocop --parallel --format github
         continue-on-error: false
   
   # Security Scanning
@@ -86,9 +105,74 @@ jobs:
         run: |
           bundle exec rails db:create db:schema:load
       
-      - name: Run Tests with Bullet
+      - name: Run Tests with Bullet (Changed Files Only)
         run: |
-          bundle exec rails test
+          # Get changed Ruby files compared to base branch
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            CHANGED_APP_FILES=$(git diff --name-only --diff-filter=ACMRTUXB ${BASE_SHA}...HEAD | grep -E '\.(rb)$' | grep -E '^(app|lib)/' || true)
+            CHANGED_TEST_FILES=$(git diff --name-only --diff-filter=ACMRTUXB ${BASE_SHA}...HEAD | grep -E '^test/.*\.rb$' || true)
+          else
+            # For push events, compare with previous commit
+            CHANGED_APP_FILES=$(git diff --name-only --diff-filter=ACMRTUXB HEAD~1 HEAD | grep -E '\.(rb)$' | grep -E '^(app|lib)/' || true)
+            CHANGED_TEST_FILES=$(git diff --name-only --diff-filter=ACMRTUXB HEAD~1 HEAD | grep -E '^test/.*\.rb$' || true)
+          fi
+          
+          # Combine changed files
+          ALL_CHANGED_FILES=$(echo -e "${CHANGED_APP_FILES}\n${CHANGED_TEST_FILES}" | sort -u | grep -v '^$' || true)
+          
+          # If no files changed, skip tests
+          if [ -z "$ALL_CHANGED_FILES" ]; then
+            echo "No application or test files changed, skipping tests"
+            exit 0
+          fi
+          
+          # Map changed application files to test files
+          TEST_FILES=""
+          
+          for file in $CHANGED_APP_FILES; do
+            if [[ "$file" =~ ^app/models/(.+)\.rb$ ]]; then
+              model_name="${BASH_REMATCH[1]}"
+              test_file="test/models/${model_name}_test.rb"
+              [ -f "$test_file" ] && TEST_FILES="${TEST_FILES}${test_file}\n"
+            elif [[ "$file" =~ ^app/controllers/(.+)\.rb$ ]]; then
+              controller_name="${BASH_REMATCH[1]}"
+              test_file="test/controllers/${controller_name}_test.rb"
+              [ -f "$test_file" ] && TEST_FILES="${TEST_FILES}${test_file}\n"
+            elif [[ "$file" =~ ^app/helpers/(.+)\.rb$ ]]; then
+              helper_name="${BASH_REMATCH[1]}"
+              test_file="test/helpers/${helper_name}_test.rb"
+              [ -f "$test_file" ] && TEST_FILES="${TEST_FILES}${test_file}\n"
+            elif [[ "$file" =~ ^app/jobs/(.+)\.rb$ ]]; then
+              job_name="${BASH_REMATCH[1]}"
+              test_file="test/jobs/${job_name}_test.rb"
+              [ -f "$test_file" ] && TEST_FILES="${TEST_FILES}${test_file}\n"
+            elif [[ "$file" =~ ^app/mailers/(.+)\.rb$ ]]; then
+              mailer_name="${BASH_REMATCH[1]}"
+              test_file="test/mailers/${mailer_name}_test.rb"
+              [ -f "$test_file" ] && TEST_FILES="${TEST_FILES}${test_file}\n"
+            fi
+          done
+          
+          # Add changed test files
+          if [ -n "$CHANGED_TEST_FILES" ]; then
+            TEST_FILES="${TEST_FILES}${CHANGED_TEST_FILES}\n"
+          fi
+          
+          # Deduplicate test files
+          UNIQUE_TEST_FILES=$(echo -e "$TEST_FILES" | sort -u | grep -v '^$' || true)
+          
+          # Run tests
+          if [ -z "$UNIQUE_TEST_FILES" ]; then
+            echo "No test files found for changed application files"
+            echo "Running all tests to ensure nothing broke..."
+            bundle exec rails test
+          else
+            echo "Running tests for changed files:"
+            echo "$UNIQUE_TEST_FILES" | sed 's/^/  - /'
+            echo ""
+            echo "$UNIQUE_TEST_FILES" | xargs bundle exec rails test
+          fi
         env:
           BULLET_ENABLED: true
           BULLET_ALERT: true

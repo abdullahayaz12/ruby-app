@@ -1,0 +1,105 @@
+#!/bin/bash
+# Run tests only for changed application files
+# Bullet will automatically detect N+1 queries in code paths exercised by these tests
+# Usage: bin/test-changed [base_branch]
+# Example: bin/test-changed main
+
+set -e
+
+# Default to comparing with main branch if no argument provided
+BASE_BRANCH="${1:-main}"
+
+# Fetch latest changes from remote
+echo "Fetching latest changes from origin..."
+git fetch origin "${BASE_BRANCH}:${BASE_BRANCH}" 2>/dev/null || true
+
+# Get changed application files
+CHANGED_FILES=$(git diff --name-only --diff-filter=ACMRTUXB "${BASE_BRANCH}"...HEAD | grep -E '\.(rb)$' | grep -E '^(app|lib)/' || true)
+
+# Also include staged files
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMRTUXB | grep -E '\.(rb)$' | grep -E '^(app|lib)/' || true)
+
+# Combine and deduplicate
+ALL_CHANGED=$(echo -e "${CHANGED_FILES}\n${STAGED_FILES}" | sort -u | grep -v '^$' || true)
+
+# Export changed files for Bullet filtering (if configured)
+export BULLET_CHANGED_FILES="$ALL_CHANGED"
+
+# If no application files changed, exit
+if [ -z "$ALL_CHANGED" ]; then
+  echo "✅ No application files changed compared to ${BASE_BRANCH}"
+  echo "Skipping tests (no new code to test)"
+  exit 0
+fi
+
+echo "🔍 Changed application files:"
+echo "$ALL_CHANGED" | sed 's/^/  - /'
+echo ""
+
+# Map changed files to test files
+TEST_FILES=""
+
+for file in $ALL_CHANGED; do
+  # Convert app/models/user.rb -> test/models/user_test.rb
+  # Convert app/controllers/users_controller.rb -> test/controllers/users_controller_test.rb
+  # Convert app/helpers/users_helper.rb -> test/helpers/users_helper_test.rb
+  
+  if [[ "$file" =~ ^app/models/(.+)\.rb$ ]]; then
+    model_name="${BASH_REMATCH[1]}"
+    test_file="test/models/${model_name}_test.rb"
+    if [ -f "$test_file" ]; then
+      TEST_FILES="${TEST_FILES}${test_file}\n"
+    fi
+  elif [[ "$file" =~ ^app/controllers/(.+)\.rb$ ]]; then
+    controller_name="${BASH_REMATCH[1]}"
+    test_file="test/controllers/${controller_name}_test.rb"
+    if [ -f "$test_file" ]; then
+      TEST_FILES="${TEST_FILES}${test_file}\n"
+    fi
+  elif [[ "$file" =~ ^app/helpers/(.+)\.rb$ ]]; then
+    helper_name="${BASH_REMATCH[1]}"
+    test_file="test/helpers/${helper_name}_test.rb"
+    if [ -f "$test_file" ]; then
+      TEST_FILES="${TEST_FILES}${test_file}\n"
+    fi
+  elif [[ "$file" =~ ^app/jobs/(.+)\.rb$ ]]; then
+    job_name="${BASH_REMATCH[1]}"
+    test_file="test/jobs/${job_name}_test.rb"
+    if [ -f "$test_file" ]; then
+      TEST_FILES="${TEST_FILES}${test_file}\n"
+    fi
+  elif [[ "$file" =~ ^app/mailers/(.+)\.rb$ ]]; then
+    mailer_name="${BASH_REMATCH[1]}"
+    test_file="test/mailers/${mailer_name}_test.rb"
+    if [ -f "$test_file" ]; then
+      TEST_FILES="${TEST_FILES}${test_file}\n"
+    fi
+  fi
+done
+
+# Also include any changed test files themselves
+CHANGED_TEST_FILES=$(git diff --name-only --diff-filter=ACMRTUXB "${BASE_BRANCH}"...HEAD | grep -E '^test/.*\.rb$' || true)
+STAGED_TEST_FILES=$(git diff --cached --name-only --diff-filter=ACMRTUXB | grep -E '^test/.*\.rb$' || true)
+ALL_CHANGED_TESTS=$(echo -e "${CHANGED_TEST_FILES}\n${STAGED_TEST_FILES}" | sort -u | grep -v '^$' || true)
+
+# Combine test files
+if [ -n "$ALL_CHANGED_TESTS" ]; then
+  TEST_FILES="${TEST_FILES}${ALL_CHANGED_TESTS}\n"
+fi
+
+# Deduplicate test files
+UNIQUE_TEST_FILES=$(echo -e "$TEST_FILES" | sort -u | grep -v '^$' || true)
+
+if [ -z "$UNIQUE_TEST_FILES" ]; then
+  echo "⚠️  No corresponding test files found for changed application files"
+  echo "Running all tests to ensure nothing broke..."
+  bundle exec rails test
+else
+  echo "🧪 Running tests for changed files (Bullet will detect N+1 queries in these code paths):"
+  echo "$UNIQUE_TEST_FILES" | sed 's/^/  - /'
+  echo ""
+  
+  # Run tests with Bullet enabled
+  # Bullet will only detect issues in code paths exercised by these tests
+  BULLET_ENABLED=true bundle exec rails test $(echo "$UNIQUE_TEST_FILES" | tr '\n' ' ')
+fi

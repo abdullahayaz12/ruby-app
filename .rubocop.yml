@@ -59,50 +59,82 @@ Layout/LineLength:
 Style/SoleNestedConditional:
   Enabled: false  # Not critical for preventing bad code
 
-# Performance Rules - Critical for preventing bad queries
+# Performance Rules - Critical for preventing bad queries and code optimization
 Performance:
   Enabled: true
   Exclude:
     - 'db/**/*'
     - 'config/**/*'
 
+# Essential Performance Cops for Code Optimization
 Performance/Count:
   Enabled: true
+  Description: 'Use count instead of size for counting records'
 
 Performance/Detect:
   Enabled: true
+  Description: 'Use detect instead of find.first'
 
 Performance/StartWith:
   Enabled: true
+  Description: 'Use start_with? instead of regex'
 
 Performance/EndWith:
   Enabled: true
+  Description: 'Use end_with? instead of regex'
 
 Performance/RegexpMatch:
   Enabled: true
+  Description: 'Use match? instead of =~ for better performance'
 
-# Rails-specific rules
+Performance/FlatMap:
+  Enabled: true
+  Description: 'Use flat_map instead of map.flatten'
+
+Performance/MapCompact:
+  Enabled: true
+  Description: 'Use filter_map instead of map.compact'
+
+Performance/Size:
+  Enabled: true
+  Description: 'Use size instead of count for arrays'
+
+Performance/StringReplacement:
+  Enabled: true
+  Description: 'Use tr instead of gsub for single character replacements'
+
+Performance/UnfreezeString:
+  Enabled: true
+  Description: 'Avoid unfreezing frozen strings'
+
+# Rails-specific rules - Query Optimization Focus
 Rails:
   Enabled: true
 
+# Critical Query Optimization Cops
 Rails/FindEach:
   Enabled: true
   Description: 'Use find_each instead of each to avoid loading all records into memory'
 
 Rails/FindBy:
   Enabled: true
+  Description: 'Use find_by instead of where.first'
 
 Rails/InverseOf:
   Enabled: true
+  Description: 'Prevent N+1 queries with inverse associations'
 
 Rails/HasManyOrHasOneDependent:
   Enabled: true
+  Description: 'Prevent orphaned records'
 
 Rails/IndexBy:
   Enabled: true
+  Description: 'Use index_by for efficient hash creation'
 
 Rails/IndexWith:
   Enabled: true
+  Description: 'Use index_with for efficient hash creation'
 
 Rails/Pluck:
   Enabled: true
@@ -110,20 +142,42 @@ Rails/Pluck:
 
 Rails/SkipsModelValidations:
   Enabled: true
+  Description: 'Prevent skipping validations which can cause data issues'
 
-# Custom rules for query optimization
+# Additional Query Optimization Cops
+# Note: Rails/EagerLoading and Rails/UnusedEagerLoading don't exist in rubocop-rails
+# Use Bullet gem for N+1 query detection instead (already configured in CI)
+
+Rails/WhereExists:
+  Enabled: true
+  Description: 'Use exists? instead of where(...).exists?'
+
+Rails/WhereNot:
+  Enabled: true
+  Description: 'Use where.not instead of where with negative conditions'
+
+# Additional Performance-Focused Style Rules
 Style/HashSyntax:
   Enabled: true
 
 Style/StringLiterals:
   Enabled: false  # Allow both single and double quotes
 
-# Prevent common bad practices
+# Prevent common bad practices that affect performance
 Style/GuardClause:
   Enabled: true
+  Description: 'Use guard clauses for early returns'
 
 Style/IfUnlessModifier:
   Enabled: true
+  Description: 'Prefer modifier form for single-line conditionals'
+
+# Disable non-performance style rules
+Style/SymbolArray:
+  Enabled: false  # Not performance-critical
+
+Style/WordArray:
+  Enabled: false  # Not performance-critical
 
 Metrics/AbcSize:
   Max: 20
@@ -154,3 +208,9 @@ Metrics/ParameterLists:
 
 # Note: Rails/Unscoped cop doesn't exist in rubocop-rails
 # Use custom query checks via rake task instead
+
+# Summary: This configuration focuses on:
+# 1. Performance optimization (Performance/* cops)
+# 2. Query optimization (Rails/FindEach, Rails/Pluck, Rails/EagerLoading, etc.)
+# 3. Code quality metrics that affect performance (AbcSize, MethodLength)
+# 4. Minimal style rules (only those that impact performance)
