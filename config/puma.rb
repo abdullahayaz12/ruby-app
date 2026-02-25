@@ -83,7 +83,7 @@ pidfile ENV["PIDFILE"] if ENV["PIDFILE"]
 # in each forked worker. If you're running a single-process dyno this
 # will be handled by the initializer instead.
 # config/puma.rb
-
+Barnes.start
 
 on_worker_boot do
   Barnes.start
