@@ -22,22 +22,21 @@
 # # In other environments, only set the PID file if requested.
 # pidfile ENV["PIDFILE"] if ENV["PIDFILE"]
 
-
-require 'barnes' 
-
 threads_count = ENV.fetch("RAILS_MAX_THREADS", 3).to_i
 threads threads_count, threads_count
 workers Integer(ENV.fetch("WEB_CONCURRENCY") { 2 })
 
 on_worker_boot do
+  # Re-establish AR connection in worker
   ActiveRecord::Base.establish_connection if defined?(ActiveRecord::Base)
 
-  # Start Barnes inside the worker so Puma.stats is available
-  if defined?(Barnes) && Barnes.respond_to?(:start)
-    begin
-      Barnes.start
-    rescue => e
-      warn "Barnes.start failed in on_worker_boot: #{e.message}"
-    end
+  # Start Barnes inside the worker (after Rails is loaded) so Puma.stats is available
+  begin
+    require 'barnes'
+    Barnes.start if defined?(Barnes) && Barnes.respond_to?(:start)
+  rescue LoadError => e
+    warn "Barnes not available in worker: #{e.message}"
+  rescue => e
+    warn "Barnes.start failed in on_worker_boot: #{e.class}: #{e.message}"
   end
 end
