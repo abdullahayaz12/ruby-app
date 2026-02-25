@@ -76,3 +76,13 @@ pidfile ENV["PIDFILE"] if ENV["PIDFILE"]
 # rails_env = ENV.fetch("RAILS_ENV") { "development" }
 # environment(rails_env)
 # ```
+
+# Start Barnes in worker processes when using Puma workers (optional;
+# requires BARNES_API_KEY to be set). This ensures the Barnes agent runs
+# in each forked worker. If you're running a single-process dyno this
+# will be handled by the initializer instead.
+# config/puma.rb
+before_fork do
+  require 'barnes'
+  Barnes.start
+end
