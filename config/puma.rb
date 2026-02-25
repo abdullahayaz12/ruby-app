@@ -23,7 +23,7 @@
 # pidfile ENV["PIDFILE"] if ENV["PIDFILE"]
 
 
-require 'barnes' if ENV['DYNO'] # optional: require only on Heroku dynos
+require 'barnes' 
 
 threads_count = ENV.fetch("RAILS_MAX_THREADS", 3).to_i
 threads threads_count, threads_count
