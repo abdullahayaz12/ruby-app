@@ -73,6 +73,9 @@ GEM
       tzinfo (~> 2.0, >= 2.0.5)
       uri (>= 0.13.1)
     ast (2.4.3)
+    barnes (0.0.9)
+      multi_json (~> 1)
+      statsd-ruby (~> 1.1)
     base64 (0.3.0)
     benchmark (0.4.1)
     bigdecimal (3.2.3)
@@ -146,6 +149,7 @@ GEM
     mini_mime (1.1.5)
     minitest (5.25.5)
     msgpack (1.8.0)
+    multi_json (1.19.1)
     net-imap (0.5.11)
       date
       net-protocol
@@ -183,6 +187,8 @@ GEM
     query_diet (0.7.3)
     racc (1.8.1)
     rack (3.2.3)
+    rack-mini-profiler (3.3.1)
+      rack (>= 1.2.0)
     rack-session (2.1.1)
       base64 (>= 0.1.0)
       rack (>= 3.0.0)
@@ -205,6 +211,10 @@ GEM
       activesupport (= 8.0.3)
       bundler (>= 1.15.0)
       railties (= 8.0.3)
+    rails-controller-testing (1.0.5)
+      actionpack (>= 5.0.1.rc1)
+      actionview (>= 5.0.1.rc1)
+      activesupport (>= 5.0.1.rc1)
     rails-dom-testing (2.3.0)
       activesupport (>= 5.0.0)
       minitest
@@ -271,6 +281,7 @@ GEM
     simplecov-html (0.13.2)
     simplecov_json_formatter (0.1.4)
     spring (4.4.0)
+    statsd-ruby (1.5.0)
     stringio (3.1.7)
     thor (1.4.0)
     timeout (0.4.3)
@@ -294,6 +305,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
+  barnes
   bootsnap
   brakeman (~> 6.0)
   bullet (~> 7.0)
@@ -305,8 +317,10 @@ DEPENDENCIES
   propshaft
   puma (>= 7.0)
   query_diet
+  rack-mini-profiler (~> 3.1)
   rack-timeout (~> 0.7.0)
   rails (~> 8.0.3)
+  rails-controller-testing (~> 1.0)
   rubocop (~> 1.66)
   rubocop-performance (~> 1.20)
   rubocop-rails (~> 2.24)

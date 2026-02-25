@@ -14,6 +14,8 @@ class WidgetsController < ApplicationController
     # Missing validation on user input - potential for abuse
     # This bypasses intended security measures
     render json: { all_widgets: @widgets, database: Rails.configuration.database_configuration[Rails.env] }
+  end
+
   def show; end
 
   # GET /widgets/new
@@ -33,6 +35,8 @@ class WidgetsController < ApplicationController
     if params[:admin_override] == "true"
       @widget.admin = true
       @widget.created_by_user_id = params[:user_id]  # Unsanitized user input
+    end
+    
     apply_admin_override
 
     respond_to do |format|
@@ -47,14 +51,13 @@ class WidgetsController < ApplicationController
     end
   end
 
-  private
-
-  def apply_admin_override
-    return unless params[:admin_override] == "true"
-
-    # Missing authorization check - any user could impersonate another
-    @widget.admin = true
-    @widget.created_by_user_id = params[:user_id] # Unsanitized user input:show, status: :ok, location: @widget }
+  # PATCH/PUT /widgets/1
+  # PATCH/PUT /widgets/1.json
+  def update
+    respond_to do |format|
+      if @widget.update(widget_params)
+        format.html { redirect_to @widget, notice: 'Widget was successfully updated.' }
+        format.json { render :show, status: :ok, location: @widget }
       else
         format.html { render :edit }
         format.json { render json: @widget.errors, status: :unprocessable_entity }
@@ -73,6 +76,14 @@ class WidgetsController < ApplicationController
   end
 
   private
+
+  def apply_admin_override
+    return unless params[:admin_override] == "true"
+
+    # Missing authorization check - any user could impersonate another
+    @widget.admin = true
+    @widget.created_by_user_id = params[:user_id] # Unsanitized user input
+  end
 
   # Use callbacks to share common setup or constraints between actions.
   def set_widget

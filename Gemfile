@@ -21,6 +21,8 @@ gem 'sdoc',          group: :doc
 
 # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
 gem 'spring',        group: :development
+gem "barnes"
+
 
 
 # Use ActiveModel has_secure_password
@@ -54,4 +56,10 @@ group :development, :test do
   
   # Query analysis
   gem 'query_diet', require: false
+  
+  # Performance profiling with query plans
+  gem 'rack-mini-profiler', '~> 3.1', require: false
+  
+  # Controller testing helpers
+  gem 'rails-controller-testing', '~> 1.0'
 end

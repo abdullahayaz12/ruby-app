@@ -77,5 +77,12 @@ Rails.application.configure do
       Bullet.rails_logger = true
       Bullet.add_footer = true
     end
+    
+    # Enable Rack Mini Profiler
+    if defined?(Rack::MiniProfiler)
+      Rack::MiniProfiler.enable
+      Rack::MiniProfiler.config.storage = Rack::MiniProfiler::MemoryStore
+      Rack::MiniProfiler.config.show_total_sql_count = true
+    end
   end
 end
