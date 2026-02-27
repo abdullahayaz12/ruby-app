@@ -49,7 +49,7 @@ group :development, :test do
   gem 'brakeman', '~> 6.0', require: false
   
   # N+1 query detection
-  gem 'bullet', '~> 7.0', require: false
+  gem 'bullet', '~> 8.1', require: false
   
   # Code coverage
   gem 'simplecov', '~> 0.22', require: false
