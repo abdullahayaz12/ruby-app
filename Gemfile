@@ -46,7 +46,7 @@ group :development, :test do
   gem 'rubocop-rspec', '~> 3.0', require: false
   
   # Security vulnerability scanner
-  gem 'brakeman', '~> 6.0', require: false
+  gem 'brakeman', '~> 8.0', require: false
   
   # N+1 query detection
   gem 'bullet', '~> 7.0', require: false
