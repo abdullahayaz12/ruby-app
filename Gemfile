@@ -2,7 +2,7 @@ source 'https://rubygems.org'
 ruby '>= 3.2', '< 4.0'
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
-gem "rails", "~> 8.0.3"
+gem "rails", "~> 8.1.2"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
 gem "propshaft"
 # Use postgresql as the database for Active Record
@@ -40,7 +40,7 @@ gem "rack-timeout", "~> 0.7.0"
 # Code Quality & Security Tools
 group :development, :test do
   # Code style checker
-  gem 'rubocop', '~> 1.66', require: false
+  gem 'rubocop', '~> 1.85', require: false
   gem 'rubocop-rails', '~> 2.24', require: false
   gem 'rubocop-performance', '~> 1.20', require: false
   gem 'rubocop-rspec', '~> 3.0', require: false
