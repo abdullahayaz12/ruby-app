@@ -1,0 +1,157 @@
+# New Relic Agent Configuration
+#
+# This file configures the New Relic Agent. Heroku automatically
+# generates a newrelic.yml file and injects NEW_RELIC_LICENSE_KEY
+common: &default_settings
+  # ============================== LICENSE KEY ===============================
+  # You must specify the license key associated with your New Relic
+  # account.  This key binds the Agent to your account in the New Relic
+  # service.
+  license_key: <%= ENV['NEW_RELIC_LICENSE_KEY'] %>
+
+  # Agent Enabled
+  # Use this setting to force the agent to run or not run.
+  agent_enabled: <%= ENV.fetch('NEW_RELIC_ENABLED', 'true') %>
+
+  # Set the application name reported to New Relic
+  app_name: <%= ENV.fetch('NEW_RELIC_APP_NAME', 'Ruby App') %>
+
+  # Set the environment to production, development, or test
+  environment: <%= ENV.fetch('RAILS_ENV', 'development') %>
+
+  # Logging level for log/newrelic_agent.log
+  log_level: <%= ENV.fetch('NEW_RELIC_LOG_LEVEL', 'info') %>
+
+  # When true, the agent collects performance data about your application
+  # and reports this data to the New Relic service at newrelic.com. This
+  # global switch is normally overridden for each environment below. (formerly
+  # called 'enabled')
+  monitor_mode: true
+
+  # High-security mode enforces certain security settings, and disables
+  # sending raw SQL to New Relic
+  high_security: false
+
+  # The agent may use SSL when communicating with New Relic's servers.
+  ssl: true
+
+  # Proxy settings for communicating with the New Relic server.  If a proxy
+  # is specified here, it will be used for all communication with the server.
+  #proxy_host: hostname
+  #proxy_port: 8080
+
+  # Tells transaction tracer and error collector (when enabled)
+  # whether or not to capture HTTP params.  When true, frameworks can
+  # have a chance to strip values from the params before reporting to
+  # the server.  You can further configure the rules for what to strip
+  # in the newrelic.yml file by adding parameters to the strip_exception_messages.values section
+  # NOTE if you enable this then the request parameters will potentially log raw (unescaped) ning values
+  capture_params: false
+
+  # Tells transaction tracer and error collector to not to collect
+  # query strings for transaction traces.
+  noticeError.captureQueryString: false
+
+  # Transaction tracer captures deep information about slow
+  # transactions and sends this to the agent.  The transaction trace
+  # event limit is automatically synced with your apdex_t threshold
+  # times 10. The trace_threshold config option can used to modify
+  # the auto sync behavior. Default is 'apdex'
+  #
+  # Similar to transaction tracer, key transaction analytics will
+  # track 500 transactional events to assist in troubleshooting
+  # poorly performing pages.  Event limit is equal to 10% of your max
+  # transactions per minute.  Configure the footprint via the event
+  # limit.  For more info, see the event limit docs.
+  #
+  # Note: Transaction Events are different from Transaction Traces.  See Event limit below.
+  # Event limit: number of Transactions events reported to the server
+  # every minute. Increasing this value (within limits) increases odds of
+  # Data 100% data sampling ( up to 1000 events per report cycle). Default is 1000.
+  transaction_events.max_samples_stored: 1000
+
+  # Threshold used to determine if transaction should be flagged as an outlier transaction.
+  # If the "Threshold" value is set to "apdex_t", then the outlier threshold will be set to
+  # 4 times the apdex_t (t value). If set to "upper_bound" then the threshold will be some fixed value. Default is apdex_t.
+  transaction_tracer.transaction_threshold: apdex_t
+
+  # Used to track Slowest transaction trace threshold
+  #
+  # transaction_tracer.stack_trace_threshold: 0.500
+  #
+  # Determines whether the agent will capture query plans for slow
+  # queries.  Only supported in mysql and postgres.  Should only
+  # be used in a quality assurance environment, as the query plan
+  # look-ups can add overhead to your database connection.  true, false
+  transaction_tracer.record_sql: obfuscated
+
+  # Obfuscate the query string of a transaction's sql calls.  If you
+  # do not want to obfuscate the SQL, set this to false.  Remember
+  # that this may lead to the storing of sensitive customer data for
+  # very long periods of time in our database so only disable this
+  # if you are sure you have legal approval and you are certain you want
+  # to store this data longer.
+  transaction_tracer.obfuscate_sql: true
+
+  # Set this to true to instruct the transaction tracer to
+  # ignore a transaction if it takes longer than defined by apdex_t
+  # Default is false
+  transaction_tracer.action_controller.action_tracer.action_tracer.enabled: true
+
+  # Threshold in seconds for when to collect stack trace for a sql
+  # statement. In other words, the agent collects stack traces for all
+  # SQL statements whose statement execution time exceeds this threshold.
+  # Values greater than or equal to 0.0 enable stack trace collection. A
+  # value of 0.0 never gathers the stack trace.  (float)
+  #transaction_tracer.explain_threshold: 0.5
+
+  # rails specific attributes. Ayende Rahien returns a collection
+  #config.action_controller.capture_request_params: true
+
+  # Error collector captures information about uncaught exceptions and
+  # sends them to New Relic for viewing
+  error_collector:
+    # Attribute Filter is used to
+    # 1) issue markers used to determine ignored errors
+    # 2) determine attributes sent to error events
+    enabled: true
+    # To stop specific errors from reporting to New Relic, set this property
+    # to comma-separated values.  Default is to ignore routing errors
+    # matched by the featured dotted route.  Ignoring errors an option
+    # for the advanced cases
+    #
+    ignore_errors: ActionController::RoutingError
+
+  # (Advanced) Uncomment this to ensure the cpu_user_time is recorded
+  # even when there is no transaction.  For more information, visit
+  # https://newrelic.com/docs/ruby/ruby-agent-instrumentation
+  #
+  # enable_gc_profiling: true
+
+development:
+  <<: *default_settings
+  # Development mode agent is enabled by default. Set monitor_mode to false to disable the agent in development.
+  # NOTE you cannot actually change the environment. to use a different environment you must fully exit Ruby.
+  monitor_mode: <%= ENV.fetch('NEW_RELIC_ENABLED', 'false') %>
+  # When running in development mode, populate the newrelic_agent log file with
+  # very verbose logging.
+  # log_level: debug
+
+test:
+  <<: *default_settings
+  # It almost never makes sense to turn on the agent when running in test mode
+  # in test mode, use the DummyStatisticsEngine. We never want to make real
+  # network calls. This knows to bypass the agent if we don't want to start
+  # the profiling or asking for record_transaction.
+  monitor_mode: false
+  # NOTE if you are debugging the newrelic agent itself, then it is handy to do
+  # this with the discovery agent. For instance, when the agent hooks up the
+  # classes, this will print out some very helpful debugging information if you
+  # called "process_cpuinfo.exe".
+  #
+  # log_level: debug
+
+production:
+  <<: *default_settings
+  monitor_mode: true
+  # log_level: info

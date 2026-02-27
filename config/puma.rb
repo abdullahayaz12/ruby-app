@@ -86,3 +86,43 @@ before_fork do
   require 'barnes'
   Barnes.start
 end
+
+# New Relic Puma Metrics Collection
+# This hook sends Puma thread pool statistics to New Relic
+on_worker_shutdown do
+  if defined?(NewRelic::Agent)
+    max_threads = ENV.fetch("RAILS_MAX_THREADS", 3).to_i
+    custom_event = {
+      'eventType' => 'PumaWorkerShutdown',
+      'max_threads' => max_threads,
+      'pool_capacity' => max_threads,
+      'timestamp' => Time.now.to_i
+    }
+    NewRelic::Agent.record_custom_event('PumaWorkerShutdown', custom_event)
+  end
+end
+
+# Collect and send Puma metrics periodically
+# This is called during the request processing lifecycle
+if ENV['RAILS_ENV'] != 'test' && defined?(NewRelic::Agent)
+  Thread.new do
+    loop do
+      sleep 60
+      max_threads = ENV.fetch("RAILS_MAX_THREADS", 3).to_i
+      
+      custom_event = {
+        'eventType' => 'PumaStats',
+        'max_threads' => max_threads,
+        'pool_capacity' => max_threads,
+        'workers' => ENV.fetch('WEB_CONCURRENCY', 2).to_i,
+        'timestamp' => Time.now.to_i
+      }
+      
+      begin
+        NewRelic::Agent.record_custom_event('PumaStats', custom_event)
+      rescue => e
+        # Fail silently if New Relic not available
+      end
+    end
+  end
+end
