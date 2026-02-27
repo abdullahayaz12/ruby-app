@@ -81,7 +81,7 @@ GEM
     bigdecimal (3.2.3)
     bootsnap (1.20.1)
       msgpack (~> 1.2)
-    brakeman (6.2.2)
+    brakeman (8.0.4)
       racc
     builder (3.3.0)
     bullet (7.2.0)
@@ -294,7 +294,7 @@ PLATFORMS
 DEPENDENCIES
   barnes
   bootsnap
-  brakeman (~> 6.0)
+  brakeman (~> 8.0)
   bullet (~> 7.0)
   dotenv-rails
   importmap-rails
